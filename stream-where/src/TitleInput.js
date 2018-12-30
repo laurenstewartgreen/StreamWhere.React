@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 
-class TitleInput extends React.Component {
+
+class TitleInput extends Component {
 
     constructor(props) {
         super(props);
@@ -8,19 +9,20 @@ class TitleInput extends React.Component {
         this.handleSubmit = this.handleSubmit.bind(this);
         this.state = { 
             value: '',
-            valuePic: '',
             resultText: [],
-            resultPhotos: []
+            loaded: false
          };
     }
 
     handleChange = (event) => {
-        this.setState({ value: event.target.value });
+        this.setState({ 
+            value: event.target.value,
+            loaded: false });
     }
 
     handleSubmit = (event) => {
-        alert('You selected ' + this.state.value + ' to search for.');
         event.preventDefault();
+        const that = this;
         fetch('https://utelly-tv-shows-and-movies-availability-v1.p.rapidapi.com/lookup?term=' + this.state.value + '&country=us',
             {
                 headers: {
@@ -28,13 +30,22 @@ class TitleInput extends React.Component {
                 }
             }
         )
-            .then(results => {
-                return results.json();
-            }).then(data => {
-                let resultText = data.results.locations 
-                this.setState({ resultText: resultText });
-            })
-        console.log(this.resultText);
+            .then((results) => results.json())
+            .then(function(data) {
+                let dataText = data.results;
+                
+                dataText.map(function(dataText) {
+                    let locs = dataText.locations;
+                    locs.map(function(locs) {
+                    let resultText = locs.display_name;
+                    that.setState({
+                        resultText: resultText,
+                        loaded: true
+                    })
+                })}
+                
+            )
+        })
     }
 
     render() {
@@ -47,8 +58,9 @@ class TitleInput extends React.Component {
 
                     <input type="submit" value="Submit" />
 
-                    <p>{this.state.value}</p>
-                    <p>{this.state.resultText}</p>
+                    <p>
+                    {this.state.loaded ? this.state.value + ' streams on ' + this.state.resultText + '.' : ''}
+                    </p>
                 </form>
         );
     }
